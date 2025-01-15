@@ -53,7 +53,6 @@ k2 = eyeden[1]/eyeden[2]
 @variable(eye2nd, fddotm <= 0, Infinite(t))
 @constraint(eye2nd, ∂(fdot,t) == t_f * (fddotp + fddotm) )
 
-#normalized mass; 1. thus power is v*a
 #note 2025-01-15: integrating by dimensionless time t; so multiply by t_f.
 @objective(eye2nd, Min, integral((k1*(u-p))*v,t)*t_f + cᵣ*integral(fddotp,t)*t_f + c_t * t_f) # positive work and force rate 
 
@@ -75,6 +74,7 @@ k2 = eyeden[1]/eyeden[2]
 set_optimizer_attribute(eye2nd, "max_cpu_time", 60.)
 set_optimizer_attributes(eye2nd, "tol" => 1e-4, "max_iter" => 500)
 
+# run once
 set_value(δ, 0.01)
 optimize!(eye2nd)
 v_ = value(v)
@@ -89,6 +89,7 @@ e_k     = 1/2*1*v_.*v_
 pl_reach = plot()
 pl_reach = plot(layout = (3,2),size = (800,800))
 
+# run across range of distances to show satuating peak velocity.
 δs = [0.001,0.002,0.003,0.004,0.005, 0.01, 0.02,0.03,0.04,0.05,0.06]
 # init vpeaks
 vpeaks = zeros(length(δs))
@@ -114,6 +115,4 @@ for (i,δ_) in enumerate(δs)
 end
 scatter!(δs, vpeaks,subplot=5,legend = false,ylimits=(0,0.6),xlimits=(0,0.07))
 plot!(δs, vpeaks,subplot=5,legend = false,ylimits=(0,0.6),xlimits=(0,0.07),xlabel="Distance",ylabel="Peak V")
-#set ylim to include 0
-
 pl_reach
