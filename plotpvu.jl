@@ -18,8 +18,8 @@ plotpvu!(phandle, t::GeneralVariableRef, traces::GeneralVariableRef...)
    Note: Deprecating plotpvu in favor of multiplot.
 """
 function plotpvu!(pfig::Plots.Plot, t::GeneralVariableRef, traces::GeneralVariableRef...; 
-    title="", ylabels=fill("", (length(traces,))))
-    ts = supports(t)
+    title="", ylabels=fill("", (length(traces,))), t_scaled = 1.)
+    ts = supports(t)*t_scaled
     for i in eachindex(traces)
         y = value(traces[i], ndarray=true)
         plot!(pfig[i], legend=false, xlabel="t", ylabel=ylabels[i])
@@ -42,10 +42,10 @@ end
    
    Note: Deprecating plotpvu in favor of multiplot.
 """
-function plotpvu(t::GeneralVariableRef, traces::GeneralVariableRef...; 
+function plotpvu(t::GeneralVariableRef, traces::GeneralVariableRef...; t_scaled = 1.,
     title="", ylabels=fill("", (length(traces,))))
     pfig = plot(layout=length(traces))
-    plotpvu!(pfig, t, traces...; title=title, ylabels=ylabels)
+    plotpvu!(pfig, t, traces...; title=title, ylabels=ylabels, t_scaled = t_scaled)
     return pfig
 end
 

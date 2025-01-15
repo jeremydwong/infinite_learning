@@ -27,7 +27,7 @@ eyesdn = InfiniteModel(Ipopt.Optimizer)
 
 @constraint(eyesdn, deriv(p,t) == v) # Dynamics
 @constraint(eyesdn, deriv(v,t) == a)
-@constraint(eyesdn, deriv(a,t) == -eyeden[0]/eyeden[3]*p -eyeden[1]/eyeden[3]*v - eyeden[2]/eyeden[3]*a + 1/eyeden[3]*u*(1+8*w))
+@constraint(eyesdn, deriv(a,t) == -eyeden[0]/eyeden[3]*p - eyeden[1]/eyeden[3]*v - eyeden[2]/eyeden[3]*a + 1/eyeden[3]*u)
 
 @constraint(eyesdn, p(0,w) == 0) # Boundary conditions
 @constraint(eyesdn, expect(p(th,w),w) == 1)
