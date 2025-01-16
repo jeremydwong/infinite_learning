@@ -53,8 +53,14 @@ k2 = eyeden[1]/eyeden[2]
 @variable(eye2nd, fddotm <= 0, Infinite(t))
 @constraint(eye2nd, ∂(fdot,t) == t_f * (fddotp + fddotm) )
 
+# slack variable for + and neg power
+@variable(eye2nd, powerp >= 0, Infinite(t))
+@variable(eye2nd, powerm <= 0, Infinite(t))
+@constraint(eye2nd, powerp + powerm == k1*(u-p).*v)
+
 #note 2025-01-15: integrating by dimensionless time t; so multiply by t_f.
-@objective(eye2nd, Min, integral((k1*(u-p))*v,t)*t_f + cᵣ*integral(fddotp,t)*t_f + c_t * t_f) # positive work and force rate 
+# @objective(eye2nd, Min, integral((k1*(u-p))*v,t)*t_f + cᵣ*integral(fddotp,t)*t_f + c_t * t_f) # positive work and force rate 
+@objective(eye2nd, Min, integral(powerp,t)*t_f - integral(powerm,t)*t_f + cᵣ*integral(fddotp,t)*t_f + c_t * t_f) # positive work and force rate 
 
 # Boundary conditions
 @constraint(eye2nd, p(0) == 0.0) # Boundary conditions
