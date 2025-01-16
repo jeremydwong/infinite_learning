@@ -117,8 +117,10 @@ for (i,δ_) in enumerate(δs)
     if i == 1
       plot!(t_, [e_joint, e_damp, e_k,e_damp+e_k], label=["joint" "damp" "kinetic" "damp+kinetic"], xlabel="t", ylabel="energy",subplot=4)    
     end
+    plot!(t_,value(powerp),color=:blue, label="+power", subplot=5,legend = false,title="power")
+    plot!(t_,value(powerm),color=:red, label="-power", subplot=5,legend = false)
     vpeaks[i] = maximum(v_)
 end
-scatter!(δs, vpeaks,subplot=5,legend = false,ylimits=(0,0.6),xlimits=(0,0.07))
-plot!(δs, vpeaks,subplot=5,legend = false,ylimits=(0,0.6),xlimits=(0,0.07),xlabel="Distance",ylabel="Peak V")
+scatter!(δs, vpeaks,subplot=6,legend = false,ylimits=(0,0.6),xlimits=(0,0.07))
+plot!(δs, vpeaks,subplot=6,legend = false,ylimits=(0,0.6),xlimits=(0,0.07),xlabel="Distance",ylabel="Peak V")
 pl_reach
