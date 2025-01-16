@@ -115,7 +115,7 @@ for (i,δ_) in enumerate(δs)
     plot!(t_,v_,title="velocity",subplot=2,legend = false)
     plot!(t_,u_,title="control",subplot=3,legend = false)
     if i == 1
-      plot!(t_, [e_joint, e_damp, e_k,e_damp+e_k], label=["joint" "damp" "kinetic" "damp+kinetic"], xlabel="t", ylabel="energy",subplot=4)    
+      plot!(t_, [e_joint, e_damp, e_k,e_damp+e_k], label=["joint" "damp" "kinetic" "damp+kinetic"], xlabel="t", ylabel="energy",subplot=4,title="energy breakdown")    
     end
     plot!(t_,value(powerp),color=:blue, label="+power", subplot=5,legend = false,title="power")
     plot!(t_,value(powerm),color=:red, label="-power", subplot=5,legend = false)
@@ -124,3 +124,5 @@ end
 scatter!(δs, vpeaks,subplot=6,legend = false,ylimits=(0,0.6),xlimits=(0,0.07))
 plot!(δs, vpeaks,subplot=6,legend = false,ylimits=(0,0.6),xlimits=(0,0.07),xlabel="Distance",ylabel="Peak V")
 pl_reach
+# save pl_reach vector graphics to figures directory
+savefig(pl_reach, "figures/2ndorder_reach.svg")
