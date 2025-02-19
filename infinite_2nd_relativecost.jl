@@ -15,7 +15,7 @@ end
 # two time constants, 224, 13 ms
 # (Need 3rd order to get bell shape)
 c_t = 20
-c_fr = 0.01
+c_fr = 0.0005
 D = 0.01
 
 # Transfer function, convert to continuous-time state space
@@ -25,6 +25,7 @@ eyeden = tfeye.matrix[1].den  # denominator coefficients in ascending order: b[0
 eye2nd = InfiniteModel(Ipopt.Optimizer)
 # time
 @infinite_parameter(eye2nd, t in [0, 1], num_supports=101, derivative_method = OrthogonalCollocation(2))
+
 # scaling of time
 @variable(eye2nd, 0.001 <= t_f <= 50, start = 1) 
 
@@ -86,16 +87,16 @@ pl_reach = plot()
 pl_reach = plot(layout = (4,2),size = (800,800))
 
 # run across range of distances to show satuating peak velocity.
-δs = [0.001,0.002,0.003,0.004,0.005, 0.01, 0.02,0.03,0.04,0.05,0.06]
+δs = [0.001,0.05, 0.06]
 # reverse the list
-δs = reverse(δs)
+# δs = reverse(δs)
 # init vpeaks
 vec_vpeak = zeros(length(δs))
 vec_cost_work = zeros(length(δs))
 vec_cost_fr = zeros(length(δs))
 vec_cost_time = zeros(length(δs))
 println("Running across range of distances to show saturating peak velocity.")
-sleep(1)
+sleep(.2)
 for (i,δ_) in enumerate(δs)
     set_value(δ, δ_)
     optimize!(eye2nd)
@@ -128,19 +129,17 @@ for (i,δ_) in enumerate(δs)
     vec_cost_fr[i] = cost_fr_
     vec_cost_time[i] = cost_time_
 end
-scatter!(δs, vec_vpeak,subplot=7,legend = false,ylimits=(0,0.6),xlimits=(0,0.07))
-plot!(δs, vec_vpeak,subplot=7,legend = false,ylimits=(0,0.6),xlimits=(0,0.07),xlabel="Distance",ylabel="Peak V")
+scatter!(δs, vec_vpeak,subplot=7,legend = false,xlimits=(0,0.07))
+plot!(δs, vec_vpeak,subplot=7,legend = false,xlimits=(0,maximum(δs)*1.1),xlabel="Distance",ylabel="Peak V")
 
-rel_cost[1] = vec_cost_work./(vec_cost_work+vec_cost_fr+vec_cost_time)
-scatter!(δs, [vec_cost_work,vec_cost_fr,vec_cost_time],subplot=6,legend = false,ylimits=(0,2.5),xlimits=(0,0.07))
-plot!(δs, [vec_cost_work,vec_cost_fr,vec_cost_time],subplot=6,ylimits=(0,2.5),xlimits=(0,0.07),xlabel="Distance",ylabel="Cost", legend = false)
+rel_work = vec_cost_work./(vec_cost_work+vec_cost_fr+vec_cost_time)
+rel_fr = vec_cost_fr./(vec_cost_work+vec_cost_fr+vec_cost_time)
+rel_time = vec_cost_time./(vec_cost_work+vec_cost_fr+vec_cost_time)
+scatter!(δs, [rel_work,rel_fr,rel_time],subplot=6,legend = false,ylimits=(0,2.5),xlimits=(0,maximum(δs)*1.1))
+plot!(δs, [rel_work,rel_fr,rel_time],subplot=6,ylimits=(0,2.5),xlimits=(0,maximum(δs)*1.1),xlabel="Distance",ylabel="Cost", legend = false)
 
-# on subplot 8 plot the relative fraction of cost_work, cost_fr, cost_time as filled area.
-rel_cost = [vec_cost_work,vec_cost_fr,vec_cost_time]./sum([vec_cost_work,vec_cost_fr,vec_cost_time],dims=1)
-# plot each rel_cost separately to have appropriate fillrange for each.
-plot!(δs, rel_cost[1], fillrange=0, fillalpha=0.5,subplot=8,legend = false,ylimits=(0,.2),xlimits=(0,0.07))
-#plot!(δs, rel_cost, fillrange=0, fillalpha=0.5,xlabel="Distance",ylabel="Rel Cost",subplot=8,legend = false,ylimits=(0,.2),xlimits=(0,0.07))
-# fillcolor=[:blue :red :green]
-# save pl_reach vector graphics to figures directory
-savefig(pl_reach, "figures/2ndorder_reach.svg")
+# print out relative work fr and time 
+println("Relative work: ", rel_work)
+println("Relative force rate: ", rel_fr)
+println("Relative time: ", rel_time)
 pl_reach
