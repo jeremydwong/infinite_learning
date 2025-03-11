@@ -12,7 +12,7 @@ model = InfiniteModel(Ipopt.Optimizer)
 c_t = 1
 gain_fr = 1/4
 c_fr = 0.05*gain_fr
-k_b = 10
+k_b = 1
 @infinite_parameter(model, t in [0, 1], num_supports=101, derivative_method = OrthogonalCollocation(2))
 @variable(model, p, Infinite(t), start = (t)->1*t)
 @variable(model, v, Infinite(t))
@@ -73,17 +73,20 @@ function packageresults()
   return t_, p_, v_, f_, e_mech, e_damp, e_k, e_fr,e_met
 end
 #amp scales with freq to to the
-fs = [.8, 1.2, 1.6,2, 2.6,3.5] # freq for a half-cycle. A to B. 
+f_base = 1
+fs = [.8, 1.2, 1.6,2, 2.6,3.5] *f_base # freq for a half-cycle. A to B. 
 Ps = 1 ./ fs
 
 f_loop = plot(layout = (4,2))
+# set size of f_loop
+plot!(size = (800,800))
 vpeak_vec = zeros(length(Ps))
 e_fr_vec  = zeros(length(Ps))
 e_w_vec   = zeros(length(Ps))
 e_met_vec = zeros(length(Ps))
 δ_vec = zeros(length(Ps))
 for (i,P_) in enumerate(Ps)
-  δ_base = .40 # cm  
+  δ_base = 1 
   # set the Period.
   δ_ = δ_base* P_^(3/2)
   δ_vec[i] = δ_
@@ -104,7 +107,7 @@ for (i,P_) in enumerate(Ps)
   scatter!([fs[i]],[vpeak_vec[i]],subplot=4,ylimits=(0,1))
 
   if i ==1
-    plot!(t_,e_mech,subplot=5, label="mech")
+    plot!(t_,e_mech,subplot=5, label="mech",linewidth=3)
     plot!(t_,e_damp,subplot=5, label = "damp")
     plot!(t_,e_met,subplot=5, label="met")
     plot!(t_,e_k,subplot=5,xlabel="time",ylabel="energy",label="kinetic",title="example energies")
@@ -118,3 +121,13 @@ plot!(fs,e_met_vec,subplot=6,color="green",xlabel="freq",xlimits = (0,maximum(fs
 f_loop
 
 plot!(fs,δ_vec,ylabel="amplitude",xlabel="freq",subplot=7)
+
+# dimensionalize by converting
+fs = fs * 60 #bpm
+δ_vec = δ_vec ./ δ_vec[1] .* 90 #deg
+# for each fs, write text the frequency and the amplitude at each point in the plot
+for (i,f_) in enumerate(fs)
+  scatter!([f_],[δ_vec[i]], annotations = (f_,δ_vec[i], text("f=" * string(Int(round(f_))) *";deg=" * string(Int(round(δ_vec[i]))),:left, 5, "courier")), xlimits=(0,300),subplot=8, legend=false)
+end
+
+f_loop
