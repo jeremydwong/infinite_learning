@@ -43,7 +43,7 @@ k_b = 0
 
 @variable(model, fddotp >= 0, Infinite(t))
 @variable(model, fddotn >= 0, Infinite(t))
-@constraint(model, fp * fn <= 1e-6)
+@constraint(model, fp * fn <= 1e-6) #classic complimentarity constraint
 
 @variable(model, 0.001 <= t_f <= 10, start = 1) # scaling of time by tf.
 
