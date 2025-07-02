@@ -38,12 +38,11 @@ sl = 2*y_0*sin(α)
 # Time scaling variable
 @variable(model, 0.001 <= t_f <= 10, start = 1)
 
-# Fixed leg contact positions
-# For simplicity, contact points are at y=0
-@finite_parameter(model, P_trail_x==0.0)  # Trailing leg ground contact x-position
-@finite_parameter(model, P_trail_y==0.0)  # Trailing leg ground contact y-position
-@finite_parameter(model, P_lead_x==sl)  # Leading leg ground contact x-position
-@finite_parameter(model, P_lead_y==0.0)   # Leading leg ground contact y-position
+# Fixed leg contact positions; contact points are currently [y=0] beginning and end.
+@finite_parameter(model, P_trail_x==0.0)  # Trailing leg x-position
+@finite_parameter(model, P_trail_y==0.0)  # Trailing leg y-position
+@finite_parameter(model, P_lead_x==sl)  # Leading leg x-position
+@finite_parameter(model, P_lead_y==0.0)   # Leading leg y-position
 
 # Leg vectors (from contact points to COM)
 @expression(model, trail_leg_x, px - P_trail_x)
@@ -102,14 +101,14 @@ sl = 2*y_0*sin(α)
 @constraint(model, negpower_lead <= mechpower_lead)
 @constraint(model, negpower_lead <= 0)
 
-# System dynamics
+# Step 4: System dynamics
 @constraint(model, ∂(px, t) == t_f * vx)
 @constraint(model, ∂(py, t) == t_f * vy)
 @constraint(model, ∂(vx, t) == t_f * (Ftot_x))
 @constraint(model, ∂(vy, t) == t_f * (Ftot_y - g))
 
-
-# Force dot variables
+# Step 5: Force rate. Force dot variables
+### begin
 @variable(model, Fdot_trail, Infinite(t))
 @variable(model, Fdot_lead, Infinite(t))
 
@@ -126,6 +125,7 @@ sl = 2*y_0*sin(α)
 @constraint(model, ∂(F_lead, t) == t_f * (Fdot_lead)/fdot_scale)
 @constraint(model, ∂(Fdot_trail, t) == t_f * ((Fddot_trail_p - Fddot_trail_m)/fddot_scale))
 @constraint(model, ∂(Fdot_lead, t) == t_f * ((Fddot_lead_p - Fddot_lead_m)/fddot_scale))
+# have not needed the following two complimentarity constraints:
 # @constraint(model, Fddot_trail_p * Fddot_trail_m <= 1e-6) # complimentarity constraint
 # @constraint(model, Fddot_lead_p * Fddot_lead_m <= 1e-6)   # complimentarity constraint
 
@@ -134,6 +134,7 @@ sl = 2*y_0*sin(α)
 @constraint(model, F_trail * (trail_leg_length - 1) <= 0)
 @constraint(model, F_lead * (lead_leg_length - 1) <= 0)
 
+# Step 6: box constraints on initial/final states.
 # Initial and final boundary conditions for a complete step
 # Initial conditions
 @constraint(model, px(0) == 0)
@@ -153,7 +154,7 @@ sl = 2*y_0*sin(α)
 @constraint(model, Fdot_lead(0) == Fdot_trail(1))
 @constraint(model, Fdot_trail(0) == Fdot_lead(1))
 
-@constraint(model,t_f == 1.0)
+@constraint(model,t_f == 1.2)
 
 # Objective function: minimize work, force rate, and time
 @expression(model, cost_work,integral(pospower_trail, t) * t_f + integral(pospower_lead, t) * t_f - 
@@ -165,7 +166,9 @@ c_fr*integral(Fddot_trail_m,t) * t_f + c_fr*integral(Fddot_lead_m,t)*t_f)
 @expression(model, cost_fr2, c_fr*integral(Fddot_trail_p.^2,t) * t_f +c_fr*integral(Fddot_lead_p.^2,t)*t_f + 
 c_fr*integral(Fddot_trail_m.^2,t) * t_f + c_fr*integral(Fddot_lead_m.^2,t)*t_f)
 
-@objective(model, Min, cost_work+cost_fr2)
+@expression(model, cost_time, c_t*t_f)
+
+@objective(model, Min, cost_work+cost_fr)
 
 # Set solver parameters
 set_optimizer_attribute(model, "max_cpu_time", 120.0)
@@ -177,39 +180,43 @@ set_optimizer_attribute(model, "warm_start_init_point", "yes")
 optimize!(model)
 
 # plot
-f = plot(layout = (4,2), size = (800, 800))
-t_ = value(t)*value(t_f)
-txt="work:"*string(round(value(cost_work),digits=2)) * " force rate:" * string(round(value(cost_fr),digits=2))
-plot!(value(px),value(py),subplot = 1,xlabel="x",ylabel="y",title=txt)
-plot!(t_,value(px),subplot = 2,ylabel="pxy",xlabel="time")
-plot!(t_,value(py),subplot = 2)
-plot!(t_,value(vx),subplot=3,label="vx",ylabel="vel")
-plot!(t_,value(vy),subplot=3,label="vy")
-plot!(t_,value(Ftrail_x), label="Ftrail_x",subplot=4,ylabel="force")
-plot!(t_,value(Ftrail_y), label="Ftrail_y",subplot=4)
-plot!(t_,value(Flead_x), label="Flead_x",subplot=4)
-plot!(t_,value(Flead_y), label="Flead_y",subplot=4)
+function plot_results()
+    f = plot(layout = (4,2), size = (800, 800))
+    t_ = value(t)*value(t_f)
+    txt="work:"*string(round(value(cost_work),digits=2)) * " force rate:" * string(round(value(cost_fr),digits=2))
+    plot!(value(px),value(py),subplot = 1,xlabel="x",ylabel="y",title=txt)
+    plot!(t_,value(px),subplot = 2,ylabel="pxy",xlabel="time")
+    plot!(t_,value(py),subplot = 2)
+    plot!(t_,value(vx),subplot=3,label="vx",ylabel="vel")
+    plot!(t_,value(vy),subplot=3,label="vy")
+    plot!(t_,value(Ftrail_x), label="Ftrail_x",subplot=4,ylabel="force")
+    plot!(t_,value(Ftrail_y), label="Ftrail_y",subplot=4)
+    plot!(t_,value(Flead_y) + value(Ftrail_y), label="FY",subplot=4)
+    plot!(t_,value(Flead_x), label="Flead_x",subplot=4)
+    plot!(t_,value(Flead_y), label="Flead_y",subplot=4)
 
-plot!(t_,value(trail_leg_length),subplot=5,label="trail",linewidth=2,ylabel="leg length")
-plot!(t_,sqrt.((value(px) .- value(P_trail_x)).^2 + (value(py) .- value(P_trail_y)).^2),subplot=5,label="trailcomp")
-plot!(t_,value(lead_leg_length),subplot=5,label="lead")
+    plot!(t_,value(trail_leg_length),subplot=5,label="trail",linewidth=2,ylabel="leg length")
+    plot!(t_,sqrt.((value(px) .- value(P_trail_x)).^2 + (value(py) .- value(P_trail_y)).^2),subplot=5,label="trailcomp")
+    plot!(t_,value(lead_leg_length),subplot=5,label="lead")
 
-# plot fdotdot for each leg
-plot!(t_,value(Fddot_trail_p)-value(Fddot_trail_m),subplot=6,label="lead",ylabel="fraterate")
-plot!(t_,value(Fddot_lead_p)-value(Fddot_lead_m),subplot=6,label="lead")
+    # plot fdotdot for each leg
+    plot!(t_,value(Fddot_trail_p)-value(Fddot_trail_m),subplot=6,label="lead",ylabel="fraterate")
+    plot!(t_,value(Fddot_lead_p)-value(Fddot_lead_m),subplot=6,label="lead")
 
-plot!(t_,value(trail_leg_velocity),subplot=7,label = "trail",ylabel="dlegdt")
-plot!(t_,value(lead_leg_velocity),subplot=7,label = "lead",ylabel="dlegdt")
+    plot!(t_,value(trail_leg_velocity),subplot=7,label = "trail",ylabel="dlegdt")
+    plot!(t_,value(lead_leg_velocity),subplot=7,label = "lead",ylabel="dlegdt")
 
-vx_dot = value(∂(vx,t)*t_f)
-vy_dot = value(∂(vy,t)*t_f)
-force_viol_x = vx_dot - value(t_f) * value(Ftot_x)
-force_viol_y = vy_dot - value(t_f) * value(Ftot_y) .+ value(t_f) * g
-plot!(t_,force_viol_x,subplot=8,label="dyn_viol_x")
-plot!(t_,force_viol_y,subplot=8,label="dyn_viol_y",xlabel="time")
+    vx_dot = value(∂(vx,t))
+    vy_dot = value(∂(vy,t))
+    force_viol_x = vx_dot - value(Ftot_x)*value(t_f)
+    force_viol_y = vy_dot - (value(Ftot_y) .- g)*value(t_f)
+    plot!(t_,force_viol_x,subplot=8,label="dyn_viol_x")
+    plot!(t_,force_viol_y,subplot=8,label="dyn_viol_y",xlabel="time")
+    return f
+end
 
+f = plot_results()
 f
-
 # function debug_solution()
 #   t_ = supports(t)
   
