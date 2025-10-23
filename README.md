@@ -1,10 +1,11 @@
 # README #
 
-### Project: E+T Power law unification paper simulations.
+### Project: Simulations that demonstrate how to perform optimization for human movement experiments. I emphasize solving for movement time as a decision variable, and typically am interested in energy in the objective. 
 
 Using InfiniteOpt, demonstrate Energy+Time power laws in eye movements, reaching, walking.
 
 ### Log
+2025-10-23: Rebula_demo.ipynb (mybinder)   [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jeremydwong/infinite_rwl/main?filepath=Rebula_demo.ipynb)
 2025-01-15: eye movements 2nd order.
 
 ### What is this repository for? ###
@@ -18,7 +19,7 @@ Using InfiniteOpt, demonstrate Energy+Time power laws in eye movements, reaching
     Using Pkg
     Pkg.activate(".")
     Pkg.instantiate()
-    include("infinite_2nd.jl")
+    include("infinite_2nd.jl") #or any of the other infinite_[*] files. 
 * Dependencies
     BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
     ControlSystems = "a6e380b2-a6ca-5380-bf3e-84a91bcd477e"
