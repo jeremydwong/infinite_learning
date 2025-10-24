@@ -158,7 +158,8 @@ function point_mass_walker()
 
     @constraint(model,t_f == 1.2)
 
-    # Objective function: minimize work, force rate, and time
+    # Objective function: minimize work, force rate, and time. 
+    # they only get added to the objective 
     @expression(model, cost_work,integral(pospower_trail, τ) * t_f + integral(pospower_lead, τ) * t_f - 
             integral(negpower_trail, τ) * t_f - integral(negpower_lead, τ) * t_f)
 
@@ -184,42 +185,42 @@ function point_mass_walker()
 end
 # plot
 function plot_results(model)
+    o = object_dictionary(model)
     f = plot(layout = (4,2), size = (800, 800))
-    t_ = value(τ)*value(t_f)
-    txt="work:"*string(round(value(cost_work),digits=2)) * " force rate:" * string(round(value(cost_fr),digits=2))
-    plot!(value(px),value(py),subplot = 1,xlabel="x",ylabel="y",title=txt)
-    plot!(t_,value(px),subplot = 2,ylabel="pxy",xlabel="time")
-    plot!(t_,value(py),subplot = 2)
-    plot!(t_,value(vx),subplot=3,label="vx",ylabel="vel")
-    plot!(t_,value(vy),subplot=3,label="vy")
-    plot!(t_,value(Ftrail_x), label="Ftrail_x",subplot=4,ylabel="force")
-    plot!(t_,value(Ftrail_y), label="Ftrail_y",subplot=4)
-    plot!(t_,value(Flead_y) + value(Ftrail_y), label="FY",subplot=4)
-    plot!(t_,value(Flead_x), label="Flead_x",subplot=4)
-    plot!(t_,value(Flead_y), label="Flead_y",subplot=4)
+    t_ = value(o[:τ])*value(o[:t_f])
+    txt="work:"*string(round(value(o[:cost_work]),digits=2)) * " force rate:" * string(round(value(o[:cost_fr]),digits=2))
+    plot!(value(o[:px]),value(o[:py]),subplot = 1,xlabel="x",ylabel="y",title=txt)
+    plot!(t_,value(o[:px]),subplot = 2,ylabel="pxy",xlabel="time")
+    plot!(t_,value(o[:py]),subplot = 2)
+    plot!(t_,value(o[:vx]),subplot=3,label="vx",ylabel="vel")
+    plot!(t_,value(o[:vy]),subplot=3,label="vy")
+    plot!(t_,value(o[:Ftrail_x]), label="Ftrail_x",subplot=4,ylabel="force")
+    plot!(t_,value(o[:Ftrail_y]), label="Ftrail_y",subplot=4)
+    plot!(t_,value(o[:Flead_y]) + value(o[:Ftrail_y]), label="FY",subplot=4)
+    plot!(t_,value(o[:Flead_x]), label="Flead_x",subplot=4)
+    plot!(t_,value(o[:Flead_y]), label="Flead_y",subplot=4)
 
-    plot!(t_,value(trail_leg_length),subplot=5,label="trail",linewidth=2,ylabel="leg length")
-    plot!(t_,sqrt.((value(px) .- value(P_trail_x)).^2 + (value(py) .- value(P_trail_y)).^2),subplot=5,label="trailcomp")
-    plot!(t_,value(lead_leg_length),subplot=5,label="lead")
+    plot!(t_,value(o[:trail_leg_length]),subplot=5,label="trail",linewidth=2,ylabel="leg length")
+    plot!(t_,sqrt.((value(o[:px]) .- value(o[:P_trail_x])).^2 + (value(o[:py]) .- value(o[:P_trail_y])).^2),subplot=5,label="trailcomp")
+    plot!(t_,value(o[:lead_leg_length]),subplot=5,label="lead")
 
     # plot fdotdot for each leg
-    plot!(t_,value(Fddot_trail_p)-value(Fddot_trail_m),subplot=6,label="lead",ylabel="fraterate")
-    plot!(t_,value(Fddot_lead_p)-value(Fddot_lead_m),subplot=6,label="lead")
+    plot!(t_,value(o[:Fddot_trail_p])-value(o[:Fddot_trail_m]),subplot=6,label="lead",ylabel="fraterate")
+    plot!(t_,value(o[:Fddot_lead_p])-value(o[:Fddot_lead_m]),subplot=6,label="lead")
 
-    plot!(t_,value(trail_leg_velocity),subplot=7,label = "trail",ylabel="dlegdt")
-    plot!(t_,value(lead_leg_velocity),subplot=7,label = "lead",ylabel="dlegdt")
+    plot!(t_,value(o[:trail_leg_velocity]),subplot=7,label = "trail",ylabel="dlegdt")
+    plot!(t_,value(o[:lead_leg_velocity]),subplot=7,label = "lead",ylabel="dlegdt")
 
-    vx_dot = value(∂(vx,τ))
-    vy_dot = value(∂(vy,τ))
-    force_viol_x = vx_dot - value(Ftot_x)*value(t_f)
-    force_viol_y = vy_dot - (value(Ftot_y) .- g)*value(t_f)
+    vx_dot = value(∂(o[:vx],o[:τ]))
+    vy_dot = value(∂(o[:vy],o[:τ]))
+    force_viol_x = vx_dot - value(o[:Ftot_x])*value(o[:t_f])
+    force_viol_y = vy_dot - (value(o[:Ftot_y]) .- g)*value(o[:t_f])
     plot!(t_,force_viol_x,subplot=8,label="dyn_viol_x")
     plot!(t_,force_viol_y,subplot=8,label="dyn_viol_y",xlabel="time")
     return f
 end
 
-f = plot_results()
-f
+f = plot_results(model)
 
 # print out the constraints. 
 for con in all_constraints(model)
