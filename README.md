@@ -5,7 +5,7 @@
 Using InfiniteOpt, demonstrate Energy+Time power laws in eye movements, reaching, walking.
 
 ### Log
-2025-10-23: Rebula_demo.ipynb (mybinder)   [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jeremydwong/infinite_rwl/main?filepath=Rebula_demo.ipynb) <br>
+2025-10-23: Rebula_demo.ipynb (mybinder)   [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jeremydwong/infinite_learning/main?filepath=Rebula_demo.ipynb) <br>ln
 2025-01-15: eye movements 2nd order.
 
 ### What is this repository for? ###
